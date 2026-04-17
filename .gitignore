@@ -1,0 +1,18 @@
+# Virtual environment
+.venv/
+.venv/bin/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# Test outputs / CSV files
+*.csv
+
+# Ruff cache
+.ruff_cache/

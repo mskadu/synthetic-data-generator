@@ -1,0 +1,19 @@
+[project]
+name = "synthetic-data-generator"
+version = "0.1.0"
+description = "CLI tool for generating synthetic test data in CSV format"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+syngen = "synthetic_data_generator.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
