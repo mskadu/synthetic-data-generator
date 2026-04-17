@@ -24,6 +24,9 @@ pytest
 # Lint and format
 ruff check .
 ruff format .
+
+# Pre-commit hooks
+uv run pre-commit install
 ```
 
 ## LSP
