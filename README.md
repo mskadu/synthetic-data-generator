@@ -23,12 +23,10 @@ uv run syngen [options]
 ## Examples
 
 ```bash
-syngen                              # Generate 10 records to output.csv (UK locale)
-syngen -n 100                       # Generate 100 records
-syngen -n 50 -o data.csv           # Generate 50 records to data.csv
-syngen -n 20 -s "|"                # Use pipe separator
-syngen -n 5 -o data.csv -s "\t"    # Use tab separator
-syngen -n 5 -l en_US             # Use US locale
+syngen -f fields.csv -n 100               # Generate 100 records using spec file
+syngen -f fields.csv -o data.csv          # Use spec file, output to data.csv
+syngen -f fields.csv -s "|"               # Use pipe separator in output
+syngen -f fields.csv --input-separator "|" # Use pipe separator in input spec
 ```
 
 ## CLI Parameters
@@ -37,10 +35,50 @@ syngen -n 5 -l en_US             # Use US locale
 |------|-------------|---------|
 | `-n`, `--number` | Number of records to generate | 10 |
 | `-o`, `--output` | Output file path | output.csv |
-| `-s`, `--separator` | CSV field separator | , |
+| `-s`, `--separator` | CSV field separator for output | , |
 | `-l`, `--locale` | Faker locale (see [supported values](https://faker.readthedocs.io/en/latest/locales.html)) | en_GB |
+| `-f`, `--fields-file` | **Required** - Path to fields spec CSV file | - |
+| `--input-separator` | Separator for input spec CSV | , |
+
+## Fields Spec CSV Format
+
+Create a CSV file with the following columns:
+
+| Column | Required | Description |
+|--------|----------|-------------|
+| `field_name` | Yes | Name of the field in output |
+| `field_type` | Yes | Redshift data type |
+| `length` | No | Length constraint (for VARCHAR) |
+
+### Example fields spec
+
+```csv
+field_name,field_type,length
+user_id,INTEGER,
+first_name,VARCHAR,50
+last_name,VARCHAR,50
+email,VARCHAR,100
+signup_date,DATE,
+is_active,BOOLEAN,
+salary,DECIMAL,
+```
+
+## Supported Redshift Data Types
+
+| Category | Types |
+|----------|-------|
+| Numeric | SMALLINT, INTEGER, BIGINT, DECIMAL, REAL, DOUBLE PRECISION |
+| String | CHAR, VARCHAR |
+| DateTime | DATE, TIME, TIMETZ, TIMESTAMP, TIMESTAMPTZ |
+| Boolean | BOOLEAN |
 
 ## Changelog
+
+### v0.3.0 (2025-04-17)
+- Add configurable fields via spec CSV file
+- Add `--fields-file` (required) parameter
+- Add `--input-separator` for spec file
+- Support Amazon Redshift data types
 
 ### v0.2.0 (2025-04-17)
 - Switch to Faker library for realistic data generation
