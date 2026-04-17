@@ -2,10 +2,22 @@
 
 CLI tool for generating synthetic test data in CSV format.
 
+## Installation
+
+```bash
+uv pip install -e .
+```
+
 ## Usage
 
 ```bash
 syngen [options]
+```
+
+Or use `uv run syngen` if not installed globally:
+
+```bash
+uv run syngen [options]
 ```
 
 ## Examples
