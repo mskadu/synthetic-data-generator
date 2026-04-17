@@ -25,8 +25,39 @@ REDSHIFT_TYPES = {
 }
 
 
-def get_generator(field_type: str):
-    return REDSHIFT_TYPES.get(field_type.upper())
+def create_generator(field_type: str, length: str | None):
+    rs_type = REDSHIFT_TYPES.get(field_type.upper())
+    if rs_type is None:
+        raise ValueError(f"Unsupported field type: {field_type}")
+
+    if rs_type == "smallint":
+        min_val, max_val = -32768, 32767
+        return lambda f: str(f.pyint(min_value=min_val, max_value=max_val))
+    elif rs_type == "integer":
+        min_val, max_val = -2147483648, 2147483647
+        return lambda f: str(f.pyint(min_value=min_val, max_value=max_val))
+    elif rs_type == "bigint":
+        min_val, max_val = -9223372036854775808, 9223372036854775807
+        return lambda f: str(f.pyint(min_value=min_val, max_value=max_val))
+    elif rs_type == "decimal":
+        return lambda f: str(f.pydecimal(left_digits=10, right_digits=2, positive=True))
+    elif rs_type == "real":
+        return lambda f: str(f.pyfloat(positive=True))
+    elif rs_type == "double":
+        return lambda f: str(f.pyfloat(positive=True))
+    elif rs_type == "text":
+        max_len = int(length) if length else 255
+        return lambda f: f.text(max_nb_chars=max_len)[:max_len]
+    elif rs_type == "date":
+        return lambda f: f.date()
+    elif rs_type == "time":
+        return lambda f: f.time()
+    elif rs_type == "datetime":
+        return lambda f: str(f.date_time())
+    elif rs_type == "boolean":
+        return lambda f: str(f.boolean()).lower()
+
+    raise ValueError(f"Unsupported Redshift type: {rs_type}")
 
 
 def parse_fields_spec(fields_file: str, delimiter: str) -> list[dict]:
@@ -44,48 +75,6 @@ def parse_fields_spec(fields_file: str, delimiter: str) -> list[dict]:
         raise ValueError(f"Missing required columns: {missing}")
 
     return rows
-
-
-def generate_value(faker: Faker, field_type: str, length: str | None) -> str:
-    rs_type = get_generator(field_type)
-    if rs_type is None:
-        raise ValueError(f"Unsupported field type: {field_type}")
-
-    if rs_type == "smallint":
-        return str(faker.pyint(min_value=-32768, max_value=32767))
-    elif rs_type == "integer":
-        return str(faker.pyint(min_value=-2147483648, max_value=2147483647))
-    elif rs_type == "bigint":
-        return str(faker.pyint(min_value=-9223372036854775808, max_value=9223372036854775807))
-    elif rs_type == "decimal":
-        return str(faker.pydecimal(left_digits=10, right_digits=2, positive=True))
-    elif rs_type == "real":
-        return str(faker.pyfloat(positive=True))
-    elif rs_type == "double":
-        return str(faker.pyfloat(positive=True))
-    elif rs_type == "text":
-        max_len = int(length) if length else 255
-        return faker.text(max_nb_chars=max_len)[:max_len]
-    elif rs_type == "date":
-        return str(faker.date())
-    elif rs_type == "time":
-        return str(faker.time())
-    elif rs_type == "datetime":
-        return str(faker.date_time())
-    elif rs_type == "boolean":
-        return str(faker.boolean()).lower()
-
-    raise ValueError(f"Unsupported Redshift type: {rs_type}")
-
-
-def generate_record(faker: Faker, fields_spec: list[dict], record_id: int) -> dict:
-    record = {}
-    for field in fields_spec:
-        field_name = field["field_name"]
-        field_type = field["field_type"]
-        length = field.get("length")
-        record[field_name] = generate_value(faker, field_type, length)
-    return record
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -147,15 +136,23 @@ def main(argv: list[str] | None = None) -> int:
     fieldnames = [field["field_name"] for field in fields_spec]
 
     try:
+        generators = [
+            create_generator(field["field_type"], field.get("length")) for field in fields_spec
+        ]
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+    try:
+        rows = [
+            {fieldnames[j]: generators[j](faker) for j in range(len(fieldnames))}
+            for _ in range(args.number)
+        ]
+
         with open(args.output, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=args.separator)
             writer.writeheader()
-            for i in range(1, args.number + 1):
-                try:
-                    writer.writerow(generate_record(faker, fields_spec, i))
-                except ValueError as e:
-                    print(f"Error: {e}", file=sys.stderr)
-                    return 1
+            writer.writerows(rows)
         print(f"Generated {args.number} records to {args.output}")
     except OSError as e:
         print(f"Error writing file: {e}", file=sys.stderr)
