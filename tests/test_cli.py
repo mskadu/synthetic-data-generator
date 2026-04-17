@@ -104,3 +104,72 @@ def fields_spec(tmp_path):
     spec = tmp_path / "spec.csv"
     spec.write_text("field_name,field_type,length\nuser_id,INTEGER,\nname,VARCHAR,50")
     return spec
+
+
+class TestRedshiftDataTypes:
+    @pytest.mark.parametrize(
+        "field_type",
+        [
+            "SMALLINT",
+            "INTEGER",
+            "BIGINT",
+            "DECIMAL",
+            "REAL",
+            "DOUBLE PRECISION",
+            "CHAR",
+            "VARCHAR",
+            "DATE",
+            "TIME",
+            "TIMETZ",
+            "TIMESTAMP",
+            "TIMESTAMPTZ",
+            "BOOLEAN",
+        ],
+    )
+    def test_each_redshift_type_runs_without_error(self, tmp_path, field_type):
+        spec_file = tmp_path / "spec.csv"
+        spec_file.write_text(f"field_name,field_type\ncol1,{field_type}")
+        output_file = tmp_path / "output.csv"
+        result = cli.main(["-n", "1", "-o", str(output_file), "-f", str(spec_file)])
+        assert result == 0
+        assert output_file.exists()
+
+
+class TestMultiFieldSchema:
+    def test_ten_fields_different_types(self, tmp_path):
+        spec_file = tmp_path / "spec.csv"
+        spec_file.write_text(
+            "field_name,field_type,length\n"
+            "id,INTEGER,\n"
+            "name,VARCHAR,50\n"
+            "amount,DECIMAL,\n"
+            "created_date,DATE,\n"
+            "is_active,BOOLEAN,\n"
+            "score,REAL,\n"
+            "notes,VARCHAR,100,\n"
+            "big_val,BIGINT,\n"
+            "rating,SMALLINT,"
+        )
+        output_file = tmp_path / "output.csv"
+        result = cli.main(["-n", "1", "-o", str(output_file), "-f", str(spec_file)])
+        assert result == 0
+        content = output_file.read_text()
+        assert "id" in content
+        assert "name" in content
+        assert "amount" in content
+
+
+class TestEdgeCases:
+    def test_large_number_of_records(self, tmp_path):
+        spec_file = tmp_path / "spec.csv"
+        spec_file.write_text("field_name,field_type\nid,INTEGER")
+        output_file = tmp_path / "output.csv"
+        result = cli.main(["-n", "1000", "-o", str(output_file), "-f", str(spec_file)])
+        assert result == 0
+
+    def test_single_record(self, tmp_path):
+        spec_file = tmp_path / "spec.csv"
+        spec_file.write_text("field_name,field_type\nid,INTEGER")
+        output_file = tmp_path / "output.csv"
+        result = cli.main(["-n", "1", "-o", str(output_file), "-f", str(spec_file)])
+        assert result == 0
