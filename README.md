@@ -1,6 +1,6 @@
 # synthetic-data-generator
 
-CLI tool for generating synthetic test data in CSV format.
+CLI tool for generating synthetic test data in CSV format for database loading.
 
 ## Installation
 
@@ -23,10 +23,12 @@ uv run syngen [options]
 ## Examples
 
 ```bash
-syngen -f fields.csv -n 100               # Generate 100 records using spec file
-syngen -f fields.csv -o data.csv          # Use spec file, output to data.csv
-syngen -f fields.csv -s "|"               # Use pipe separator in output
-syngen -f fields.csv --input-separator "|" # Use pipe separator in input spec
+syngen -f fields.csv                          # Generate 10 records using spec file
+syngen -f fields.csv -n 100                   # Generate 100 records using spec file
+syngen -f fields.csv -o data.csv              # Use spec file, output to data.csv
+syngen -f fields.csv -s "|"                   # Use pipe separator in output
+syngen -f fields.csv --input-separator "|"     # Use pipe separator in input spec
+syngen -f fields.csv -o data.csv -s "|" -n 50 # All options combined
 ```
 
 ## CLI Parameters
