@@ -1,6 +1,6 @@
 # synthetic-data-generator
 
-Generate realistic test data as CSV, ready for database loading. Define your columns in a simple "fields spec" CSV file, and syngen fills in the rows.
+Generate realistic test data as CSV, ready for database loading. Define your columns in a simple "fields spec" CSV file, and syngen fills in the rows using the [Faker](https://github.com/joke2k/faker) library.
 
 ```csv
 field_name,field_type,length
