@@ -83,6 +83,17 @@ VARCHAR and CHAR fields with names like `email`, `first_name`, `phone`, or `city
 | String | CHAR, VARCHAR |
 | DateTime | DATE, TIME, TIMETZ, TIMESTAMP, TIMESTAMPTZ |
 | Boolean | BOOLEAN |
+| Enum | ENUM |
+
+For ENUM fields, the `length` column contains pipe-separated choices:
+
+```csv
+field_name,field_type,length
+status,ENUM,active|inactive|pending
+priority,ENUM,low|medium|high|critical
+```
+
+Each row gets a random value from the specified choices.
 
 ## Smart VARCHAR
 
@@ -110,6 +121,9 @@ VARCHAR and CHAR fields automatically detect field names and generate realistic 
 Matching is case-insensitive and partial (`home_phone` matches `phone`, `user_email` matches `email`). The `length` column still applies — values are truncated to fit.
 
 ## Changelog
+
+### v0.5.0 (2026-06-12)
+- ENUM type: field generates values from a pipe-separated list of choices
 
 ### v0.4.0 (2026-06-12)
 - Smart VARCHAR: field-name-aware generation for emails, names, phone numbers, addresses, and more

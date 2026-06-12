@@ -52,6 +52,14 @@ FIELD_PROVIDER_MAP: dict[str, str] = {
 
 
 def create_generator(field_type: str, length: str | None, field_name: str = ""):
+    if field_type.upper() == "ENUM":
+        if not length:
+            raise ValueError("ENUM type requires a 'length' column with pipe-separated choices")
+        choices = [c.strip() for c in length.split("|")]
+        if not choices or all(c == "" for c in choices):
+            raise ValueError("ENUM type requires at least one choice")
+        return lambda f: f.random_element(choices)
+
     rs_type = REDSHIFT_TYPES.get(field_type.upper())
     if rs_type is None:
         raise ValueError(f"Unsupported field type: {field_type}")

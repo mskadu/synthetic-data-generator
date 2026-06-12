@@ -252,6 +252,58 @@ class TestSmartVarchar:
         assert len(value) <= 5
 
 
+class TestEnumType:
+    def test_basic_enum(self, tmp_path):
+        spec = tmp_path / "spec.csv"
+        spec.write_text("field_name,field_type,length\nstatus,ENUM,active|inactive|pending")
+        out = tmp_path / "out.csv"
+        cli.main(["-n", "5", "-o", str(out), "-f", str(spec), "--seed", "42"])
+        import csv as csv_mod
+
+        with open(out) as f:
+            rows = list(csv_mod.reader(f))
+        values = [r[0] for r in rows[1:]]
+        assert all(v in ("active", "inactive", "pending") for v in values)
+
+    def test_enum_single_choice(self, tmp_path):
+        spec = tmp_path / "spec.csv"
+        spec.write_text("field_name,field_type,length\nrole,ENUM,admin")
+        out = tmp_path / "out.csv"
+        cli.main(["-n", "3", "-o", str(out), "-f", str(spec), "--seed", "42"])
+        content = out.read_text()
+        assert content.count("admin") == 3
+
+    def test_enum_missing_choices_errors(self, tmp_path):
+        spec = tmp_path / "spec.csv"
+        spec.write_text("field_name,field_type,length\nstatus,ENUM,")
+        out = tmp_path / "out.csv"
+        result = cli.main(["-n", "1", "-o", str(out), "-f", str(spec)])
+        assert result == 1
+
+    def test_enum_multiple_fields(self, tmp_path):
+        spec = tmp_path / "spec.csv"
+        spec.write_text(
+            "field_name,field_type,length\nstatus,ENUM,active|inactive\npriority,ENUM,low|med|high"
+        )
+        out = tmp_path / "out.csv"
+        result = cli.main(["-n", "5", "-o", str(out), "-f", str(spec), "--seed", "42"])
+        assert result == 0
+        import csv as csv_mod
+
+        with open(out) as f:
+            rows = list(csv_mod.reader(f))
+        assert rows[0] == ["status", "priority"]
+
+    def test_enum_with_seed_is_deterministic(self, tmp_path):
+        spec = tmp_path / "spec.csv"
+        spec.write_text("field_name,field_type,length\nstatus,ENUM,active|inactive|pending")
+        out1 = tmp_path / "out1.csv"
+        out2 = tmp_path / "out2.csv"
+        cli.main(["-n", "10", "-o", str(out1), "-f", str(spec), "--seed", "42"])
+        cli.main(["-n", "10", "-o", str(out2), "-f", str(spec), "--seed", "42"])
+        assert out1.read_text() == out2.read_text()
+
+
 class TestEdgeCases:
     def test_large_number_of_records(self, tmp_path):
         spec_file = tmp_path / "spec.csv"
