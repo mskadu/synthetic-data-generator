@@ -15,4 +15,4 @@ __pycache__/
 *.csv
 
 # Ruff cache
-.ruff_cache/
+.ruff_cache/.DS_Store
