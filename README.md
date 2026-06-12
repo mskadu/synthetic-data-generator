@@ -2,6 +2,11 @@
 
 CLI tool for generating synthetic test data in CSV format for database loading.
 
+## Prerequisites
+
+- **Python 3.10+**
+- **uv** (recommended) or pip
+
 ## Installation
 
 ```bash
