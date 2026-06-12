@@ -196,6 +196,59 @@ class TestStdoutMode:
         assert "name" in captured.out
 
 
+class TestSmartVarchar:
+    def test_email_field_uses_faker_email(self, tmp_path):
+        spec = tmp_path / "spec.csv"
+        spec.write_text("field_name,field_type,length\nemail,VARCHAR,100")
+        out = tmp_path / "out.csv"
+        cli.main(["-n", "1", "-o", str(out), "-f", str(spec), "--seed", "42"])
+        content = out.read_text()
+        assert "@" in content
+
+    def test_name_field_uses_faker_name(self, tmp_path):
+        spec = tmp_path / "spec.csv"
+        spec.write_text("field_name,field_type,length\nuser_name,VARCHAR,100")
+        out = tmp_path / "out.csv"
+        cli.main(["-n", "1", "-o", str(out), "-f", str(spec), "--seed", "42"])
+        content = out.read_text()
+        assert " " in content  # names contain a space
+
+    def test_unknown_field_falls_back_to_text(self, tmp_path):
+        spec = tmp_path / "spec.csv"
+        spec.write_text("field_name,field_type,length\nnotes,VARCHAR,100")
+        out = tmp_path / "out.csv"
+        cli.main(["-n", "1", "-o", str(out), "-f", str(spec), "--seed", "42"])
+        content = out.read_text()
+        assert len(content) > 10
+
+    def test_char_type_also_smart(self, tmp_path):
+        spec = tmp_path / "spec.csv"
+        spec.write_text("field_name,field_type,length\nemail,CHAR,100")
+        out = tmp_path / "out.csv"
+        cli.main(["-n", "1", "-o", str(out), "-f", str(spec), "--seed", "42"])
+        assert "@" in out.read_text()
+
+    def test_partial_name_match(self, tmp_path):
+        spec = tmp_path / "spec.csv"
+        spec.write_text("field_name,field_type,length\nhome_phone,VARCHAR,20")
+        out = tmp_path / "out.csv"
+        cli.main(["-n", "1", "-o", str(out), "-f", str(spec), "--seed", "42"])
+        content = out.read_text()
+        assert any(c.isdigit() for c in content)
+
+    def test_phone_number_respects_length(self, tmp_path):
+        spec = tmp_path / "spec.csv"
+        spec.write_text("field_name,field_type,length\nphone,VARCHAR,5")
+        out = tmp_path / "out.csv"
+        cli.main(["-n", "1", "-o", str(out), "-f", str(spec), "--seed", "42"])
+        import csv as csv_mod
+        with open(out) as f:
+            reader = csv_mod.reader(f)
+            rows = list(reader)
+        value = rows[1][0]
+        assert len(value) <= 5
+
+
 class TestEdgeCases:
     def test_large_number_of_records(self, tmp_path):
         spec_file = tmp_path / "spec.csv"
