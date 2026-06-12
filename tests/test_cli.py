@@ -181,7 +181,9 @@ class TestSeedReproducibility:
 
 class TestQuietMode:
     def test_quiet_suppresses_output(self, tmp_path, capsys, fields_spec):
-        result = cli.main(["-n", "1", "-o", str(tmp_path / "out.csv"), "-f", str(fields_spec), "--quiet"])
+        result = cli.main(
+            ["-n", "1", "-o", str(tmp_path / "out.csv"), "-f", str(fields_spec), "--quiet"]
+        )
         assert result == 0
         captured = capsys.readouterr()
         assert captured.out == ""

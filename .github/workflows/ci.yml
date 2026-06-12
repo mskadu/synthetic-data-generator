@@ -2,36 +2,28 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main]
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install uv
-        run: pip install uv
+      - run: uv sync
 
-      - name: Install dependencies
-        run: uv pip install -e . --system ruff pytest
+      - run: uv run ruff check
 
-      - name: Lint
-        run: uv run ruff check .
+      - run: uv run ruff format --check
 
-      - name: Format check
-        run: uv run ruff format --check .
-
-      - name: Run tests
-        run: uv run pytest
+      - run: uv run pytest

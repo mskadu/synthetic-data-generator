@@ -107,7 +107,7 @@ pytest
 
 ## CI
 
-GitHub Actions runs on push and PRs. See `.github/workflows/ci.yml`.
+Runs on every push and PR to `main`. See `.github/workflows/ci.yml`.
 
 ## Known Limitations
 
