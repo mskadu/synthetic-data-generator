@@ -41,6 +41,9 @@ syngen -f fields.csv -o data.csv -s "|" -n 50 # All options combined
 | `-l`, `--locale` | Faker locale (see [supported values](https://faker.readthedocs.io/en/latest/locales.html)) | en_GB |
 | `-f`, `--fields-file` | **Required** - Path to fields spec CSV file | - |
 | `--input-separator` | Separator for input spec CSV | , |
+| `--seed` | Seed for reproducible output (same seed = same data) | - |
+| `--quiet` | Suppress "Generated X records to Y" message | - |
+| `--stdout` | Write CSV to stdout instead of a file | - |
 
 ## Fields Spec CSV Format
 
