@@ -244,6 +244,7 @@ class TestSmartVarchar:
         out = tmp_path / "out.csv"
         cli.main(["-n", "1", "-o", str(out), "-f", str(spec), "--seed", "42"])
         import csv as csv_mod
+
         with open(out) as f:
             reader = csv_mod.reader(f)
             rows = list(reader)
