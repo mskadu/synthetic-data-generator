@@ -24,8 +24,34 @@ REDSHIFT_TYPES = {
     "BOOLEAN": "boolean",
 }
 
+FIELD_PROVIDER_MAP: dict[str, str] = {
+    "email": "email",
+    "first_name": "first_name",
+    "last_name": "last_name",
+    "name": "name",
+    "full_name": "name",
+    "username": "user_name",
+    "phone": "phone_number",
+    "telephone": "phone_number",
+    "mobile": "phone_number",
+    "city": "city",
+    "postcode": "postcode",
+    "post_code": "postcode",
+    "zip": "postcode",
+    "address": "address",
+    "street": "street_address",
+    "country": "country",
+    "company": "company",
+    "url": "url",
+    "website": "url",
+    "job": "job",
+    "title": "job",
+    "occupation": "job",
+    "uuid": "uuid4",
+}
 
-def create_generator(field_type: str, length: str | None):
+
+def create_generator(field_type: str, length: str | None, field_name: str = ""):
     rs_type = REDSHIFT_TYPES.get(field_type.upper())
     if rs_type is None:
         raise ValueError(f"Unsupported field type: {field_type}")
@@ -47,6 +73,12 @@ def create_generator(field_type: str, length: str | None):
         return lambda f: str(f.pyfloat(positive=True))
     elif rs_type == "text":
         max_len = int(length) if length else 255
+        provider = next(
+            (v for k, v in FIELD_PROVIDER_MAP.items() if k in field_name.lower()),
+            None,
+        )
+        if provider:
+            return lambda f: str(getattr(f, provider)())[:max_len]
         return lambda f: f.text(max_nb_chars=max_len)[:max_len]
     elif rs_type == "date":
         return lambda f: f.date()
@@ -156,7 +188,8 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         generators = [
-            create_generator(field["field_type"], field.get("length")) for field in fields_spec
+            create_generator(field["field_type"], field.get("length"), field["field_name"])
+            for field in fields_spec
         ]
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)

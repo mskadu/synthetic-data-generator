@@ -68,6 +68,8 @@ is_active,BOOLEAN,
 salary,DECIMAL,
 ```
 
+VARCHAR and CHAR fields with names like `email`, `first_name`, `phone`, or `city` automatically generate realistic values (emails, names, phone numbers, cities) instead of random text. Unknown field names fall back to text. See the [smart VARCHAR](#smart-varchar) section for the full mapping.
+
 ## Supported Redshift Data Types
 
 | Category | Types |
@@ -77,7 +79,37 @@ salary,DECIMAL,
 | DateTime | DATE, TIME, TIMETZ, TIMESTAMP, TIMESTAMPTZ |
 | Boolean | BOOLEAN |
 
+## Smart VARCHAR
+
+VARCHAR and CHAR fields automatically detect field names and generate realistic values using the matching Faker provider:
+
+| Name pattern | Generates | Example |
+|-------------|-----------|---------|
+| `email` | Email address | `john.doe@example.org` |
+| `first_name` | First name | `John` |
+| `last_name` | Last name | `Doe` |
+| `name`, `full_name` | Full name | `John Doe` |
+| `username` | Username | `johndoe` |
+| `phone`, `telephone`, `mobile` | Phone number | `+44 7700 900123` |
+| `city` | City name | `Manchester` |
+| `postcode`, `post_code`, `zip` | Postcode | `M1 1AE` |
+| `address` | Full address | `123 High Street\nManchester\nM1 1AE` |
+| `street` | Street address | `123 High Street` |
+| `country` | Country | `United Kingdom` |
+| `company` | Company name | `Acme Ltd` |
+| `url`, `website` | URL | `https://www.acme.com/` |
+| `job`, `title`, `occupation` | Job title | `Software Engineer` |
+| `uuid` | UUID | `550e8400-e29b-...` |
+| anything else | Random text | Sentence-like text |
+
+Matching is case-insensitive and partial (`home_phone` matches `phone`, `user_email` matches `email`). The `length` column still applies — values are truncated to fit.
+
 ## Changelog
+
+### v0.4.0 (2026-06-12)
+- Smart VARCHAR: field-name-aware generation for emails, names, phone numbers, addresses, and more
+- `--seed`, `--quiet`, `--stdout` flags
+- Add `.DS_Store` to gitignore
 
 ### v0.3.0 (2025-04-17)
 - Add configurable fields via spec CSV file
