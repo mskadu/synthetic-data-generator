@@ -112,6 +112,22 @@ def main(argv: list[str] | None = None) -> int:
         default=",",
         help="Separator for input spec CSV (default: ,)",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Seed for reproducible output",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress output message",
+    )
+    parser.add_argument(
+        "--stdout",
+        action="store_true",
+        help="Write to stdout instead of a file",
+    )
     args = parser.parse_args(argv)
 
     if args.number < 1:
@@ -123,6 +139,9 @@ def main(argv: list[str] | None = None) -> int:
     except Exception:
         print(f"Error: Invalid locale '{args.locale}'. See {VALID_LOCALES}", file=sys.stderr)
         return 1
+
+    if args.seed is not None:
+        faker.seed_instance(args.seed)
 
     try:
         fields_spec = parse_fields_spec(args.fields_file, args.input_separator)
@@ -144,16 +163,23 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        rows = [
-            {fieldnames[j]: generators[j](faker) for j in range(len(fieldnames))}
-            for _ in range(args.number)
-        ]
+        if args.stdout:
+            outfile = sys.stdout
+        else:
+            outfile = open(args.output, "w", newline="", encoding="utf-8")
 
-        with open(args.output, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=args.separator)
-            writer.writeheader()
-            writer.writerows(rows)
-        print(f"Generated {args.number} records to {args.output}")
+        writer = csv.DictWriter(outfile, fieldnames=fieldnames, delimiter=args.separator)
+        writer.writeheader()
+        for _ in range(args.number):
+            row = {fieldnames[j]: generators[j](faker) for j in range(len(fieldnames))}
+            writer.writerow(row)
+
+        if not args.stdout:
+            outfile.close()
+
+        if not args.quiet:
+            dest = "stdout" if args.stdout else args.output
+            print(f"Generated {args.number} records to {dest}")
     except OSError as e:
         print(f"Error writing file: {e}", file=sys.stderr)
         return 1

@@ -159,6 +159,43 @@ class TestMultiFieldSchema:
         assert "amount" in content
 
 
+class TestSeedReproducibility:
+    def test_seed_produces_same_output(self, tmp_path):
+        spec_file = tmp_path / "spec.csv"
+        spec_file.write_text("field_name,field_type\nid,INTEGER")
+        out1 = tmp_path / "out1.csv"
+        out2 = tmp_path / "out2.csv"
+        cli.main(["-n", "5", "-o", str(out1), "-f", str(spec_file), "--seed", "42"])
+        cli.main(["-n", "5", "-o", str(out2), "-f", str(spec_file), "--seed", "42"])
+        assert out1.read_text() == out2.read_text()
+
+    def test_different_seed_different_output(self, tmp_path):
+        spec_file = tmp_path / "spec.csv"
+        spec_file.write_text("field_name,field_type\nid,INTEGER")
+        out1 = tmp_path / "out1.csv"
+        out2 = tmp_path / "out2.csv"
+        cli.main(["-n", "5", "-o", str(out1), "-f", str(spec_file), "--seed", "42"])
+        cli.main(["-n", "5", "-o", str(out2), "-f", str(spec_file), "--seed", "99"])
+        assert out1.read_text() != out2.read_text()
+
+
+class TestQuietMode:
+    def test_quiet_suppresses_output(self, tmp_path, capsys, fields_spec):
+        result = cli.main(["-n", "1", "-o", str(tmp_path / "out.csv"), "-f", str(fields_spec), "--quiet"])
+        assert result == 0
+        captured = capsys.readouterr()
+        assert captured.out == ""
+
+
+class TestStdoutMode:
+    def test_stdout_writes_to_stdout(self, tmp_path, capsys, fields_spec):
+        result = cli.main(["-n", "1", "-f", str(fields_spec), "--stdout"])
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "user_id" in captured.out
+        assert "name" in captured.out
+
+
 class TestEdgeCases:
     def test_large_number_of_records(self, tmp_path):
         spec_file = tmp_path / "spec.csv"
